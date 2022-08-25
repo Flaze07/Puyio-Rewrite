@@ -130,20 +130,28 @@ const store = createStore({
 			},
 			//these handling values are in ms
 			handling: {
-				"ARR": 33,
-				"DAS": 167
+				//Auto repeat delay
+				"ARR": 55,
+				//Time before Auto repeat starts
+				"DAS": 167,
+				//Soft drop delay
+				"SDD": 100
 			},
 			control: {
 				"ArrowLeft": "move-left",
 				"ArrowRight": "move-right",
-				"z": "rotate-ccw",
-				"ArrowUp": "rotate-cw"
+				"KeyZ": "rotate-ccw",
+				"ArrowUp": "rotate-cw",
+				"Space": "harddrop",
+				"ArrowDown": "softdrop"
 			},
 			controlState: {
 				'move-left': false,
 				'move-right': false,
 				"rotate-ccw": false,
-				"rotate-cw": false
+				"rotate-cw": false,
+				"harddrop": false,
+				"softdrop": false
 			}
 		}
 	}

@@ -14,8 +14,7 @@ class PuyoController
      * @param {ImageData} puyoTexture 
      * @param {number} gravity
      */
-    constructor(isPlayer, drawScale, startX, startY, puyoTexture, gravity) 
-    {
+    constructor(isPlayer, drawScale, startX, startY, puyoTexture, gravity) {
         this.controllerType = "Puyo";
         this.isPlayer = isPlayer;
         this.drawScale  = drawScale;
@@ -37,8 +36,7 @@ class PuyoController
         /**
          * set the vertical line for grid
          */
-        for(let i = 0; i < this.puyoBoard.width; ++i) 
-        {
+        for(let i = 0; i < this.puyoBoard.width; ++i) {
             this.grid.moveTo((i * this.drawScale * this.puyoRadius) + startX, startY);
             this.grid.lineTo((i * this.drawScale * this.puyoRadius) + startX, startY + this.drawnHeight);
         }
@@ -47,8 +45,7 @@ class PuyoController
          * set the horizontal line for grid
          */
 
-        for(let i = 0; i < this.puyoBoard.height; ++i) 
-        {
+        for(let i = 0; i < this.puyoBoard.height; ++i) {
             this.grid.moveTo(startX, (i * this.drawScale * this.puyoRadius) + startY);
             this.grid.lineTo(startX + this.drawnWidth, (i * this.drawScale * this.puyoRadius) + startY);
         }
@@ -66,8 +63,7 @@ class PuyoController
         }
     }
 
-    setBoardPosition(startX, startY) 
-    {
+    setBoardPosition(startX, startY) {
         this.startX = startX;
         this.startY = startY;
 
@@ -76,8 +72,7 @@ class PuyoController
         /**
          * set the vertical line for grid
          */
-        for(let i = 0; i < this.puyoBoard.width; ++i) 
-        {
+        for(let i = 0; i < this.puyoBoard.width; ++i) {
             this.grid.moveTo((i * this.drawScale * this.puyoRadius) + startX, startY);
             this.grid.lineTo((i * this.drawScale * this.puyoRadius) + startX, startY + this.drawnHeight);
         }
@@ -86,17 +81,14 @@ class PuyoController
          * set the horizontal line for grid
          */
 
-        for(let i = 0; i < this.puyoBoard.height; ++i) 
-        {
+        for(let i = 0; i < this.puyoBoard.height; ++i) {
             this.grid.moveTo(startX, (i * this.drawScale * this.puyoRadius) + startY);
             this.grid.lineTo(startX + this.drawnWidth, (i * this.drawScale * this.puyoRadius) + startY);
         }
     }
 
-    drawBoard(ctx, store) 
-    {
-        if(ctx === undefined) 
-        {
+    drawBoard(ctx, store) {
+        if(ctx === undefined) {
             alert(`Error happened at ${getRowNum()}`);
         }
 
@@ -107,12 +99,9 @@ class PuyoController
         //draw grid
         ctx.stroke(this.grid);
 
-        for(let i = 0; i < this.puyoBoard.height; ++i) 
-        {
-            for(let j = 0; j < this.puyoBoard.width; ++j) 
-            {
-                if(this.puyoBoard.isEmpty(j, i)) 
-                {
+        for(let i = 0; i < this.puyoBoard.height; ++i) {
+            for(let j = 0; j < this.puyoBoard.width; ++j) {
+                if(this.puyoBoard.isEmpty(j, i)) {
                     continue;
                 }
                 ctx.drawImage(this.puyoTexture, store.state.puyoColor[this.puyoBoard.getValue(i, j)].x, 0,
@@ -133,8 +122,7 @@ class PuyoController
                         this.puyoRadius * this.drawScale, this.puyoRadius * this.drawScale);
     }
 
-    spawnPuyo() 
-    {
+    spawnPuyo() {
         this.puyo1.x = 2;
         this.puyo1.y = -1;
         this.puyo1.color = Math.floor(Math.random() * 4) + 1;
@@ -144,8 +132,7 @@ class PuyoController
         this.puyo2.color = Math.floor(Math.random() * 4) + 1;
     }
 
-    tryMoveDynamicPuyo() 
-    {
+    tryMoveDynamicPuyo() {
         const newPuyo1Pos = this.puyo1.y + 1;
 
         const newPuyo2Pos = this.puyo2.y + 1;
@@ -191,8 +178,7 @@ class PuyoController
             y: this.puyo2.y + rotateDirection.y
         };
 
-        for(const elem of rotateCheck) 
-        {
+        for(const elem of rotateCheck) {
             const newPos1 = {
                 x: this.puyo1.x + elem.x,
                 y: this.puyo1.y + elem.y
@@ -203,8 +189,7 @@ class PuyoController
                 y: newPos.y + elem.y
             }
 
-            if(this.puyoBoard.isEmptyAndValidVector(newPos1) && this.puyoBoard.isEmptyAndValidVector(newPos2)) 
-            {
+            if(this.puyoBoard.isEmptyAndValidVector(newPos1) && this.puyoBoard.isEmptyAndValidVector(newPos2)) {
                 this.puyo1.x= newPos1.x;
                 this.puyo1.y = newPos1.y;
 
@@ -216,78 +201,129 @@ class PuyoController
     }
 
     /**
+     * pos is a JSON object with x and y as field
+     */
+    harddropPuyo(pos) {
+        let newPos = pos;
+        newPos.y += 1;
+        while(this.puyoBoard.isEmptyAndValidVector(newPos)) {
+            newPos.y += 1;
+        }
+
+        newPos.y -= 1;
+        return newPos;
+    }
+
+    tryHarddropPuyo() {
+        if(this.puyo1.x == this.puyo2.x) {
+            if(this.puyo1.y > this.puyo2.y) {
+                const newPuyoPos = this.harddropPuyo({x: this.puyo1.x, y: this.puyo1.y});
+                this.puyo1.y = newPuyoPos.y;
+
+                this.puyo2.y = this.puyo1.y - 1;
+            } else {
+                const newPuyoPos = this.harddropPuyo({x: this.puyo2.x, y: this.puyo2.y});
+                this.puyo2.y = newPuyoPos.y;
+
+                this.puyo1.y = this.puyo2.y - 1;
+            }
+        } else {
+            const newPuyo1Pos = this.harddropPuyo({x: this.puyo1.x, y: this.puyo1.y});
+            this.puyo1.y = newPuyo1Pos.y;
+
+            const newPuyo2Pos = this.harddropPuyo({x: this.puyo2.x, y: this.puyo2.y});
+            this.puyo2.y = newPuyo2Pos.y;
+        }
+    }
+
+    trySoftdropPuyo() {
+        if(this.puyo1.x == this.puyo2.x) {
+            let newPos;
+            if(this.puyo1.y > this.puyo2.y) {
+                newPos = {
+                    x: this.puyo1.x,
+                    y: this.puyo1.y + 1
+                };
+            } else {
+                newPos = {
+                    x: this.puyo2.x,
+                    y: this.puyo2.y + 1
+                }
+            }
+
+            if(this.puyoBoard.isEmptyAndValidVector(newPos)) {
+                this.puyo1.y += 1;
+                this.puyo2.y += 1;
+            }
+        } else {
+            const newPos1 = {
+                x: this.puyo1.x,
+                y: this.puyo1.y + 1
+            };
+
+            const newPos2 = {
+                x: this.puyo2.x,
+                y: this.puyo2.y + 1
+            };
+
+            if(this.puyoBoard.isEmptyAndValidVector(newPos1) && this.puyoBoard.isEmptyAndValidVector(newPos2)) {
+                this.puyo1.y += 1;
+                this.puyo2.y += 1
+            }
+        }
+    }
+
+    /**
      * @param {string} rotateSystem
      */
-    tryRotateCCW(rotateSystem) 
-    {
+    tryRotateCCW(rotateSystem) {
         //anchor and other puyo same x
-        if(this.puyo1.x == this.puyo2.x) 
-        {
+        if(this.puyo1.x == this.puyo2.x) {
             //the anchor is below
-            if(this.puyo1.y > this.puyo2.y) 
-            {
+            if(this.puyo1.y > this.puyo2.y) {
                 this.rotatePuyo({x: -1, y: 1}, rotateSystem["below"]);
-            } 
-            //the anchor is above
-            else if(this.puyo1.y < this.puyo2.y) 
-            {
+            } //the anchor is above
+            else if(this.puyo1.y < this.puyo2.y) {
                 this.rotatePuyo({x: 1, y: -1}, rotateSystem["above"]);
             }
-        } 
-        //anchor and other puyo same line
-        else 
-        {
+        } //anchor and other puyo same line
+        else {
             //anchor is to the left
-            if(this.puyo1.x < this.puyo2.x) 
-            {
+            if(this.puyo1.x < this.puyo2.x) {
                 this.rotatePuyo({x: -1, y: -1}, rotateSystem["left"]);
-            } 
-            //anchor is to the right
-            else if(this.puyo1.x > this.puyo2.x) 
-            {
+            } //anchor is to the right
+            else if(this.puyo1.x > this.puyo2.x) {
                 this.rotatePuyo({x: 1, y: 1}, rotateSystem["right"]);
             }
         }
     }
 
-    tryRotateCW(rotateSystem)
-    {
+    tryRotateCW(rotateSystem) {
         //anchor and other puyo same x
-        if(this.puyo1.x == this.puyo2.x) 
-        {
+        if(this.puyo1.x == this.puyo2.x) {
             //the anchor is below
-            if(this.puyo1.y > this.puyo2.y) 
-            {
+            if(this.puyo1.y > this.puyo2.y) {
                 this.rotatePuyo({x: 1, y: 1}, rotateSystem["below"]);
-            } 
-            //the anchor is above
-            else if(this.puyo1.y < this.puyo2.y) 
-            {
+            } //the anchor is above
+            else if(this.puyo1.y < this.puyo2.y) {
                 this.rotatePuyo({x: -1, y: -1}, rotateSystem["above"]);
             }
-        } 
-        //anchor and other puyo same line
-        else 
-        {
+        } //anchor and other puyo same line
+        else {
             //anchor is to the left
-            if(this.puyo1.x < this.puyo2.x) 
-            {
+            if(this.puyo1.x < this.puyo2.x) {
                 this.rotatePuyo({x: -1, y: 1}, rotateSystem["left"]);
-            } 
-            //anchor is to the right
-            else if(this.puyo1.x > this.puyo2.x) 
-            {
+            } //anchor is to the right
+            else if(this.puyo1.x > this.puyo2.x) {
                 this.rotatePuyo({x: 1, y: -1}, rotateSystem["right"]);
             }
         }
     }   
 
-    process(elapsed) 
-    {
+    process(elapsed) {
         this.gravityCnt += elapsed;
 
-        if(this.gravityCnt > this.gravity) 
-        {
+        if(this.gravityCnt > this.gravity) {
             this.tryMoveDynamicPuyo();
             this.gravityCnt -= this.gravity;
         }
