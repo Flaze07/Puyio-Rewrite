@@ -23,6 +23,7 @@ class PuyoController
         this.puyoTexture = puyoTexture;
         this.gravity = gravity;
         this.gravityCnt = 0;
+        this.lockDelayCnt = 0;
 
         this.puyoRadius = 16; //pixels
 
@@ -104,7 +105,7 @@ class PuyoController
                 if(this.puyoBoard.isEmpty(j, i)) {
                     continue;
                 }
-                ctx.drawImage(this.puyoTexture, store.state.puyoColor[this.puyoBoard.getValue(i, j)].x, 0,
+                ctx.drawImage(this.puyoTexture, store.state.puyoColor[this.puyoBoard.getValue(j, i)].x, 0,
                                 this.puyoRadius, this.puyoRadius, (j * this.puyoRadius * this.drawScale) + this.startX,
                                 (i * this.puyoRadius * this.drawScale) + this.startY, 
                                 this.puyoRadius * this.drawScale, this.puyoRadius * this.drawScale);
@@ -132,6 +133,20 @@ class PuyoController
         this.puyo2.color = Math.floor(Math.random() * 4) + 1;
     }
 
+    puyoCanMove() {
+        const newPuyo1Pos = this.puyo1.y + 1;
+
+        const newPuyo2Pos = this.puyo2.y + 1;
+
+        if(this.puyoBoard.isEmptyAndValid(this.puyo1.x, newPuyo1Pos) &&
+            this.puyoBoard.isEmptyAndValid(this.puyo2.x, newPuyo2Pos))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
     tryMoveDynamicPuyo() {
         const newPuyo1Pos = this.puyo1.y + 1;
 
@@ -151,7 +166,7 @@ class PuyoController
         const newPuyo2Pos = this.puyo2.x - 1;
 
         if(this.puyoBoard.isEmptyAndValid(newPuyo1Pos, this.puyo1.y) &&
-            this.puyoBoard.isEmptyAndValid(newPuyo2Pos, this.puyo1.y))
+            this.puyoBoard.isEmptyAndValid(newPuyo2Pos, this.puyo2.y))
         {
             this.puyo1.x = newPuyo1Pos;
             this.puyo2.x = newPuyo2Pos;
@@ -164,7 +179,7 @@ class PuyoController
         const newPuyo2Pos = this.puyo2.x + 1;
 
         if(this.puyoBoard.isEmptyAndValid(newPuyo1Pos, this.puyo1.y) &&
-            this.puyoBoard.isEmptyAndValid(newPuyo2Pos, this.puyo1.y))
+            this.puyoBoard.isEmptyAndValid(newPuyo2Pos, this.puyo2.y))
         {
             this.puyo1.x = newPuyo1Pos;
             this.puyo2.x = newPuyo2Pos;
@@ -234,6 +249,9 @@ class PuyoController
             const newPuyo2Pos = this.harddropPuyo({x: this.puyo2.x, y: this.puyo2.y});
             this.puyo2.y = newPuyo2Pos.y;
         }
+
+        this.lockPuyo();
+        this.spawnPuyo();
     }
 
     trySoftdropPuyo() {
@@ -318,10 +336,26 @@ class PuyoController
                 this.rotatePuyo({x: 1, y: -1}, rotateSystem["right"]);
             }
         }
-    }   
+    }
 
-    process(elapsed) {
+    lockPuyo() {
+        this.puyoBoard.setValue(this.puyo1.x, this.puyo1.y, this.puyo1.color);
+        this.puyoBoard.setValue(this.puyo2.x, this.puyo2.y, this.puyo2.color);
+    }
+
+    process(elapsed, store) {
         this.gravityCnt += elapsed;
+
+        if(!this.puyoCanMove()) {
+            if(this.lockDelayCnt > store.state.lockDelay) {
+                this.tryHarddropPuyo();
+                this.lockDelayCnt = 0;
+                this.gravityCnt = 0;
+                return;
+            } else {
+                this.lockDelayCnt += elapsed;
+            }
+        }
 
         if(this.gravityCnt > this.gravity) {
             this.tryMoveDynamicPuyo();

@@ -8,6 +8,7 @@ const store = createStore({
 	state() {
 		return {
 			boardScale: 3,
+			lockDelay: 1000,
 			puyoColor: {
 				1: {
 					color: "red",

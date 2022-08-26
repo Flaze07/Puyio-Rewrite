@@ -35,13 +35,11 @@ export default {
 		const ctx = canvas.getContext("2d");
 		ctx.imageSmoothingEnabled = false;
 
-		this.controllers[0].spawnPuyo();
-
-		this.controllers[0].drawBoard(ctx, store);
-
 		let start;
 
 		const playerController = this.controllers.filter(elem => elem.isPlayer)[0];
+		playerController.spawnPuyo();
+		playerController.drawBoard(ctx, store);
 
 		this.handleKeydown = (e) => {
 			if(store.state.control[e.code] !== undefined) {
@@ -186,7 +184,7 @@ export default {
 			 * each controller logic process
 			 */
 			this.controllers.forEach(elem => {
-				elem.process(elapsed);
+				elem.process(elapsed, store);
 			})
 
 			//clear board

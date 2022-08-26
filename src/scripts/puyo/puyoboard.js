@@ -11,16 +11,18 @@ class PuyoBoard {
 
 	isValidVector(vec) {
 		if(!vec.hasOwnProperty("x")) {
-			alert(`${getRowNum()}: IsValidVector has received invalid vec, lacking x`)
+			alert(`${getRowNum()}: IsValidVector has received invalid vec, lacking x`);
+			console.trace();
 			return;
 		}
 		if(!vec.hasOwnProperty("y")) {
 			alert(`${getRowNum()}: IsValidVector has received invalid vec, lacking y`)
+			console.trace();
 			return;
 		}
 		if(vec.x < 0 || vec.x >= this.width) {
 			return false;
-		} else if(vec.y < 0 || vec.y >= this.height) {
+		} else if(vec.y >= this.height) {
 			return false;
 		}
 
@@ -36,6 +38,9 @@ class PuyoBoard {
 			return undefined;
 		}
 
+		if(vec.y < 0) {
+			return true;
+		}
 		return this.board[vec.x + (vec.y * this.width)] === 0;
 	}
 
