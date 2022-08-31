@@ -26,6 +26,9 @@ class PuyoController
         this.lockDelayCnt = 0;
         this.bfsDelay = 200;
         this.bfsDelayCnt = 0;
+        this.nextPuyo1 = [0, 0];
+        this.nextPuyo2 = [0, 0];
+        this.fontSize = 11;
 
         this.puyoRadius = 16; //pixels
 
@@ -34,24 +37,14 @@ class PuyoController
         this.drawnWidth = this.puyoBoard.width * this.puyoRadius * this.drawScale;
         this.drawnHeight = this.puyoBoard.height * this.puyoRadius * this.drawScale;
 
-        this.grid = new Path2D();
+        this.nextCanvas = document.createElement("canvas");
 
-        /**
-         * set the vertical line for grid
-         */
-        for(let i = 0; i < this.puyoBoard.width; ++i) {
-            this.grid.moveTo((i * this.drawScale * this.puyoRadius) + startX, startY);
-            this.grid.lineTo((i * this.drawScale * this.puyoRadius) + startX, startY + this.drawnHeight);
-        }
+        this.nextWidth = (this.puyoRadius + 10) * this.drawScale;
+        this.nextHeight = (this.puyoRadius + 10) * 4 * this.drawScale;
 
-        /**
-         * set the horizontal line for grid
-         */
-
-        for(let i = 0; i < this.puyoBoard.height; ++i) {
-            this.grid.moveTo(startX, (i * this.drawScale * this.puyoRadius) + startY);
-            this.grid.lineTo(startX + this.drawnWidth, (i * this.drawScale * this.puyoRadius) + startY);
-        }
+        const next2D = this.nextCanvas.getContext("2d");
+        next2D.fillStyle = "#FFF";
+        next2D.fillRect(0, 0, this.nextWidth, this.nextHeight);
 
         this.puyo1 = {
             x: 0,
@@ -124,6 +117,44 @@ class PuyoController
         ctx.drawImage(this.puyoTexture, store.state.puyoColor[this.puyo2.color].x, 0,
                         this.puyoRadius, this.puyoRadius, (this.puyo2.x * this.puyoRadius * this.drawScale) + this.startX,
                         (this.puyo2.y * this.puyoRadius * this.drawScale) + this.startY, 
+                        this.puyoRadius * this.drawScale, this.puyoRadius * this.drawScale);
+
+        ctx.fillStyle = "#FFF";
+        ctx.fillRect(this.startX + this.drawnWidth, this.startY, this.nextWidth, this.nextHeight);
+
+        const fontStyle = `${this.fontSize * this.drawScale}px Arial`;
+        ctx.font = fontStyle;
+
+        ctx.fillStyle = "#F00";
+        ctx.fillText("Next", this.startX + this.drawnWidth, this.startY + (this.fontSize * this.drawScale));
+
+        const nextPuyoX = this.startX + 
+                            this.drawnWidth + 
+                            ((this.nextWidth - (this.puyoRadius * this.drawScale)) / 2);
+
+        let nextPuyoY = this.startY + ((this.fontSize + 5)* this.drawScale);
+
+        ctx.drawImage(this.puyoTexture, store.state.puyoColor[this.nextPuyo1[0]].x, 0, 
+                        this.puyoRadius, this.puyoRadius, nextPuyoX, nextPuyoY,
+                        this.puyoRadius * this.drawScale, this.puyoRadius * this.drawScale);
+
+        nextPuyoY += this.puyoRadius * this.drawScale;
+
+        ctx.drawImage(this.puyoTexture, store.state.puyoColor[this.nextPuyo1[1]].x, 0, 
+                        this.puyoRadius, this.puyoRadius, nextPuyoX, nextPuyoY,
+                        this.puyoRadius * this.drawScale, this.puyoRadius * this.drawScale);
+
+        nextPuyoY += this.puyoRadius * this.drawScale;
+        nextPuyoY += this.puyoRadius * this.drawScale;
+
+        ctx.drawImage(this.puyoTexture, store.state.puyoColor[this.nextPuyo2[0]].x, 0, 
+                        this.puyoRadius, this.puyoRadius, nextPuyoX, nextPuyoY,
+                        this.puyoRadius * this.drawScale, this.puyoRadius * this.drawScale);
+
+        nextPuyoY += this.puyoRadius * this.drawScale;
+
+        ctx.drawImage(this.puyoTexture, store.state.puyoColor[this.nextPuyo2[1]].x, 0, 
+                        this.puyoRadius, this.puyoRadius, nextPuyoX, nextPuyoY,
                         this.puyoRadius * this.drawScale, this.puyoRadius * this.drawScale);
     }
 
@@ -310,13 +341,31 @@ class PuyoController
     }
 
     spawnPuyo() {
+        if(this.nextPuyo1[0] == 0) {
+            this.puyo1.color = this.getNextPuyo.next().value;
+            this.puyo2.color = this.getNextPuyo.next().value;
+
+            this.nextPuyo1[0] = this.getNextPuyo.next().value;
+            this.nextPuyo1[1] = this.getNextPuyo.next().value;
+
+            this.nextPuyo2[0] = this.getNextPuyo.next().value;
+            this.nextPuyo2[1] = this.getNextPuyo.next().value;
+        } else {
+            this.puyo1.color = this.nextPuyo1[0];
+            this.puyo2.color = this.nextPuyo1[1];
+
+            this.nextPuyo1[0] = this.nextPuyo2[0];
+            this.nextPuyo1[1] = this.nextPuyo2[1];
+
+            this.nextPuyo2[0] = this.getNextPuyo.next().value;
+            this.nextPuyo2[1] = this.getNextPuyo.next().value;
+        }
+
         this.puyo1.x = 2;
         this.puyo1.y = -1;
-        this.puyo1.color = this.getNextPuyo.next().value;
 
         this.puyo2.x = 2;
         this.puyo2.y = 0;
-        this.puyo2.color = this.getNextPuyo.next().value;
     }
 
     puyoCanMove() {

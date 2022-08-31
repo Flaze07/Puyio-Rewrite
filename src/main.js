@@ -7,7 +7,7 @@ import router from './router'
 const store = createStore({
 	state() {
 		return {
-			boardScale: 3,
+			boardScale: 2.5,
 			lockDelay: 1000,
 			puyoColor: {
 				1: {
