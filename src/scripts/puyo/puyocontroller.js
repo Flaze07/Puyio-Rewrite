@@ -24,6 +24,8 @@ class PuyoController
         this.gravity = gravity;
         this.gravityCnt = 0;
         this.lockDelayCnt = 0;
+        this.bfsDelay = 200;
+        this.bfsDelayCnt = 0;
 
         this.puyoRadius = 16; //pixels
 
@@ -62,6 +64,8 @@ class PuyoController
             y: 0,
             color: 0
         }
+
+        this.getNextPuyo = this.generateNextPuyo();
     }
 
     setBoardPosition(startX, startY) {
@@ -123,14 +127,196 @@ class PuyoController
                         this.puyoRadius * this.drawScale, this.puyoRadius * this.drawScale);
     }
 
+    /**
+     * puyoPos is a json object with at least two fields:
+     * x: number
+     * y: number
+     */
+    getPuyoNeighbour(puyoPos) {
+        let result = [];
+
+        if(this.puyoBoard.isValid(puyoPos.x-1, puyoPos.y)) {
+            result.push({
+                x: puyoPos.x - 1,
+                y: puyoPos.y
+            });
+        }
+
+        if(this.puyoBoard.isValid(puyoPos.x+1, puyoPos.y)) {
+            result.push({
+                x: puyoPos.x + 1,
+                y: puyoPos.y
+            });
+        }
+
+        if(this.puyoBoard.isValid(puyoPos.x, puyoPos.y - 1) && ((puyoPos.y - 1) > 0)) {
+            result.push({
+                x: puyoPos.x,
+                y: puyoPos.y - 1
+            });
+        }
+
+        if(this.puyoBoard.isValid(puyoPos.x, puyoPos.y + 1)) {
+            result.push({
+                x: puyoPos.x,
+                y: puyoPos.y + 1
+            });
+        }
+
+        return result;
+    }
+
+    /**
+     * puyo is a json object with three fields
+     * x: number
+     * y: number
+     * color: number
+     */
+    bfsPuyo(puyo) {
+        const puyoColor = puyo.color;
+        let hasBfs = false;
+
+        /**
+         * if the color of puyo is blank ( which means there's no puyo )
+         * immediately stops the execution
+         */
+        if(puyoColor === 0) {
+            return hasBfs;
+        }
+
+        const queue = [];
+        const sameColor = [];
+        const visited = [];
+
+        sameColor.push({x: puyo.x, y: puyo.y});
+        queue.push({x: puyo.x, y: puyo.y});
+        visited.push({x: puyo.x, y: puyo.y});
+
+        /**
+         * get all the neighbours that're all same color
+         * as puyo
+         */
+        while(queue.length > 0) {
+            const current = queue.shift();
+
+            const neighbours = this.getPuyoNeighbour(current);
+
+            for(const neighbour of neighbours) {
+                /**
+                 * this part of the code checks
+                 * whether or not the neighbour has been
+                 * visited prior
+                 */
+                let isInVisited = false;
+                for(const visits of visited) {
+                    if(neighbour.x === visits.x && neighbour.y === visits.y) {
+                        isInVisited = true;
+                        break;
+                    }
+                }
+
+                if(isInVisited) {
+                    continue;
+                }
+
+                /**
+                 * checks whether or not the neighbour puyo has
+                 * same color as what's needed
+                 */
+
+                if(this.puyoBoard.getValueVector(neighbour) === puyoColor) {
+                    visited.push(neighbour);
+                    sameColor.push(neighbour);
+                    queue.push(neighbour);
+                }
+            }
+        }
+
+        if(sameColor.length >= 4) {
+            for(const e of sameColor) {
+                hasBfs = true;
+                this.puyoBoard.setValueVector(e, 0);
+            }
+        }
+
+        return hasBfs;
+    }
+
+    bfsAllPuyo() {
+        let hasBfs = false;
+        for(let i = this.puyoBoard.height; i >= 0; --i) {
+            let rowEmpty = true;
+            for(let j = this.puyoBoard.width; j >= 0; --j) {
+                const puyoColor = this.puyoBoard.getValue(j, i);
+                /**
+                 * if there's no puyo in that row, then we can guarantee that there's no
+                 * more puyo above. If there's puyo above, that puyo hasn't been gravitied down
+                 * after a bfs pass
+                 */
+                if(puyoColor !== 0) {
+                    rowEmpty = false;
+                }
+                hasBfs = this.bfsPuyo({
+                    x: j,
+                    y: i,
+                    color: puyoColor
+                }) || hasBfs;
+            }
+            if(rowEmpty) {
+                break;
+            }
+        }
+        return hasBfs;
+    }
+
+    dropAllPuyo() {
+        let puyoDropped = false;
+        for(let i = this.puyoBoard.height - 1; i >= 0; --i) {
+            for(let j = 0; j < this.puyoBoard.width; ++j) {
+                const puyoColor = this.puyoBoard.getValue(j, i);
+                const belowColor = this.puyoBoard.getValue(j, i+1);
+                if(puyoColor !== undefined &&
+                    puyoColor !== 0 &&
+                    belowColor !== undefined && 
+                    belowColor === 0) 
+                {
+                    puyoDropped = true;
+                    this.puyoBoard.setValue(j, i, 0);
+                    const newPos = this.harddropPuyo({
+                        x: j,
+                        y: i
+                    });
+                    this.puyoBoard.setValueVector(newPos, puyoColor);
+                }
+            }
+        }
+        return puyoDropped;
+    }
+
+    *generateNextPuyo() {
+        yield 1;
+        yield 2;
+        yield 1;
+        yield 2;
+        yield 1;
+        yield 2;
+        yield 3;
+        yield 4;
+        yield 1;
+        yield 2;
+        while(true) {
+            yield Math.floor(Math.random() * 4) + 1;
+        }
+    }
+
     spawnPuyo() {
         this.puyo1.x = 2;
         this.puyo1.y = -1;
-        this.puyo1.color = Math.floor(Math.random() * 4) + 1;
+        this.puyo1.color = this.getNextPuyo.next().value;
 
         this.puyo2.x = 2;
         this.puyo2.y = 0;
-        this.puyo2.color = Math.floor(Math.random() * 4) + 1;
+        this.puyo2.color = this.getNextPuyo.next().value;
     }
 
     puyoCanMove() {
@@ -160,8 +346,7 @@ class PuyoController
         }
     }
 
-    tryMoveLeft() 
-    {
+    tryMoveLeft() {
         const newPuyo1Pos = this.puyo1.x - 1;
         const newPuyo2Pos = this.puyo2.x - 1;
 
@@ -251,7 +436,6 @@ class PuyoController
         }
 
         this.lockPuyo();
-        this.spawnPuyo();
     }
 
     trySoftdropPuyo() {
@@ -341,6 +525,9 @@ class PuyoController
     lockPuyo() {
         this.puyoBoard.setValue(this.puyo1.x, this.puyo1.y, this.puyo1.color);
         this.puyoBoard.setValue(this.puyo2.x, this.puyo2.y, this.puyo2.color);
+
+        this.puyo1.y = undefined;
+        this.puyo2.y = undefined;
     }
 
     process(elapsed, store) {
@@ -360,6 +547,19 @@ class PuyoController
         if(this.gravityCnt > this.gravity) {
             this.tryMoveDynamicPuyo();
             this.gravityCnt -= this.gravity;
+        }
+
+        if(this.bfsDelayCnt <= 0) {
+            if(this.bfsAllPuyo()) {
+                this.bfsDelayCnt = this.bfsDelay;
+            }
+
+            if(!this.dropAllPuyo() && this.puyo1.y === undefined) {
+                this.spawnPuyo();
+            }
+
+        } else {
+            this.bfsDelayCnt -= elapsed;
         }
     }
 }
