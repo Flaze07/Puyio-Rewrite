@@ -184,7 +184,9 @@ export default {
 			 * each controller logic process
 			 */
 			this.controllers.forEach(elem => {
-				elem.process(elapsed, store);
+				elem.process(elapsed, store, (controller) => {
+					console.log(controller.drawnWidth);
+				});
 			})
 
 			//clear board

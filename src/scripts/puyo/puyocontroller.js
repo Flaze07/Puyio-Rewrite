@@ -24,11 +24,12 @@ class PuyoController
         this.gravity = gravity;
         this.gravityCnt = 0;
         this.lockDelayCnt = 0;
-        this.bfsDelay = 200;
+        this.bfsDelay = 500;
         this.bfsDelayCnt = 0;
         this.nextPuyo1 = [0, 0];
         this.nextPuyo2 = [0, 0];
         this.fontSize = 11;
+        this.chainCount = 0;
 
         this.puyoRadius = 16; //pixels
 
@@ -407,8 +408,7 @@ class PuyoController
         }
     }
 
-    tryMoveRight() 
-    {
+    tryMoveRight() {
         const newPuyo1Pos = this.puyo1.x + 1;
         const newPuyo2Pos = this.puyo2.x + 1;
 
@@ -420,8 +420,7 @@ class PuyoController
         }
     }
 
-    rotatePuyo(rotateDirection, rotateCheck) 
-    {
+    rotatePuyo(rotateDirection, rotateCheck) {
         const newPos = {
             x: this.puyo2.x + rotateDirection.x,
             y: this.puyo2.y + rotateDirection.y
@@ -579,7 +578,7 @@ class PuyoController
         this.puyo2.y = undefined;
     }
 
-    process(elapsed, store) {
+    playerProcess(elapsed, store) {
         this.gravityCnt += elapsed;
 
         if(!this.puyoCanMove()) {
@@ -610,6 +609,14 @@ class PuyoController
         } else {
             this.bfsDelayCnt -= elapsed;
         }
+    }
+
+    process(elapsed, store, callback) {
+        if(this.isPlayer) {
+            this.playerProcess(elapsed, store);
+        }
+
+        callback(this);
     }
 }
 
