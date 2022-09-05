@@ -27,6 +27,80 @@ const store = createStore({
 					x: 48
 				}
 			},
+			puyo: {
+				groupPower(groupCount) {
+					switch(groupCount) {
+						case 4:
+							return 0
+						case 5:
+							return 2
+						case 6:
+							return 3
+						case 7:
+							return 4
+						case 8:
+							return 5
+						case 9:
+							return 6
+						case 10:
+							return 7
+						default:
+							return 10
+					}
+				},
+				chainPower(chainCount) {
+					switch(chainCount) {
+						case 1:
+							return 0;
+						case 2:
+							return 8;
+						case 3:
+							return 16;
+						case 4:
+							return 32;
+						case 5:
+							return 64;
+						case 6:
+							return 96;
+						case 7:
+							return 128;
+						case 8:
+							return 160;
+						case 9:
+							return 192;
+						case 10:
+							return 224;
+						case 11:
+							return 256;
+						case 12:
+							return 288;
+						case 13:
+							return 320;
+						case 14:
+							return 354;
+						case 15:
+							return 384;
+						case 16:
+							return 416;
+						case 17:
+							return 448;
+						case 18:
+							return 480;
+						case 19:
+							return 512;
+						case 20:
+							return 544;
+						case 21:
+							return 576;
+						case 22:
+							return 608;
+						case 23:
+							return 640;
+						default:
+							return 672;
+					}
+				}
+			},
 			//Puyo Rotation System
 			PRS: {
 				"ccw": {

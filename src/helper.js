@@ -5,6 +5,11 @@ function getRowNum() {
     return e.pop();
 }
 
+function clamp(num, min, max) {
+    return Math.min((Math.max(num, min)), max);
+}
+
 export {
-    getRowNum
+    getRowNum,
+    clamp
 }

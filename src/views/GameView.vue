@@ -1,5 +1,6 @@
 <script>
 import { PuyoController } from "@/scripts/puyo/puyocontroller.js";
+import { clamp } from "@/helper.js";
 
 export default {
 	data() {
@@ -15,7 +16,10 @@ export default {
 			rotationClicked: false,
 			lastClicked: undefined,
 			hdClicked: false,
-			sdClicked: false
+			sdClicked: false,
+			rafID: undefined,
+			timeoutID: undefined,
+			score: 0
 		}
 	},
 	mounted() {
@@ -40,6 +44,10 @@ export default {
 		const playerController = this.controllers.filter(elem => elem.isPlayer)[0];
 		playerController.spawnPuyo();
 		playerController.drawBoard(ctx, store);
+		playerController.setClearEvent((puyoCount, puyoChain) => {
+			const bonus = clamp(store.state.puyo.groupPower(puyoCount) + store.state.puyo.chainPower(puyoChain+1), 1, 999);
+			this.score += (10 * puyoCount) * bonus;
+		});
 
 		this.handleKeydown = (e) => {
 			if(store.state.control[e.code] !== undefined) {
@@ -57,12 +65,13 @@ export default {
 
 		window.addEventListener("keyup", this.handleKeyup);
 
-		const step = (timestamp) => {
+		const step = () => {
 			if(start === undefined) {
-				start = timestamp;
+				start = performance.now();
 			}
 
-			const elapsed = timestamp - start;
+			const elapsed = performance.now() - start;
+			start = performance.now();
 
 			/**
 			 * handle input
@@ -184,11 +193,13 @@ export default {
 			 * each controller logic process
 			 */
 			this.controllers.forEach(elem => {
-				elem.process(elapsed, store, (controller) => {
-					console.log(controller.drawnWidth);
-				});
+				elem.process(elapsed, store);
 			})
 
+			this.timeoutID = setTimeout(step);
+		}
+
+		const drawScreen = () => {
 			//clear board
 			ctx.fillStyle = "#000";
 			ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -197,18 +208,21 @@ export default {
 				elem.drawBoard(ctx, store);
 			});
 
-			start = timestamp;
+			ctx.fillStyle = "#D00";
+			// ctx.fillText("Hello", this.startX, this.startY + playerController.drawnHeight + 10);
+			ctx.fillText(this.score, playerController.startX, playerController.startY + playerController.drawnHeight + (playerController.fontSize * boardScale));
 
-			this.rafID = requestAnimationFrame(step);
-		}
+			this.rafID = requestAnimationFrame(drawScreen);
+		};
 
-		this.rafID = requestAnimationFrame(step);
+		this.rafID = requestAnimationFrame(drawScreen);
+		this.timeoutID = setTimeout(step);
 	},
 	unmounted() {
 		cancelAnimationFrame(this.rafID);
+		clearTimeout(this.timeoutID);
 		window.removeEventListener("keydown", this.handleKeydown);
 		window.removeEventListener("keyup", this.handleKeyup);
-
 	}
 }
 </script>

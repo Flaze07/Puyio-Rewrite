@@ -24,12 +24,22 @@ class PuyoController
         this.gravity = gravity;
         this.gravityCnt = 0;
         this.lockDelayCnt = 0;
-        this.bfsDelay = 500;
-        this.bfsDelayCnt = 0;
+        this.clearDelay = 500;
+        this.clearDelayCnt = 0;
         this.nextPuyo1 = [0, 0];
         this.nextPuyo2 = [0, 0];
         this.fontSize = 11;
         this.chainCount = 0;
+        this.markedPuyo = [];
+        this.puyoChain = 0;
+        /**
+         * this function callback will be called when
+         * there's a clear in puyo puyo happens
+         * this function's parameter will consist of
+         * number of puyo cleared and
+         * the chain
+         */
+        this.clearEvent = undefined;
 
         this.puyoRadius = 16; //pixels
 
@@ -60,6 +70,10 @@ class PuyoController
         }
 
         this.getNextPuyo = this.generateNextPuyo();
+    }
+
+    setClearEvent(callback) {
+        this.clearEvent = callback;
     }
 
     setBoardPosition(startX, startY) {
@@ -265,12 +279,18 @@ class PuyoController
         }
 
         if(sameColor.length >= 4) {
+            hasBfs = true;
             for(const e of sameColor) {
-                hasBfs = true;
-                this.puyoBoard.setValueVector(e, 0);
+                let contains = false;
+                this.markedPuyo.every(elem => {
+                    contains = (e.x === elem.x && e.y === elem.y);
+                    return !contains;
+                });
+                if(!contains) {
+                    this.markedPuyo.push(e);
+                }
             }
         }
-
         return hasBfs;
     }
 
@@ -299,6 +319,20 @@ class PuyoController
             }
         }
         return hasBfs;
+    }
+
+    clearMarkedPuyo() {
+        if(this.clearEvent !== undefined) {
+            this.clearEvent(this.markedPuyo.length, this.puyoChain);
+        }
+
+        this.markedPuyo.forEach(elem => {
+            this.puyoBoard.setValueVector(elem, 0);
+        });
+
+        this.markedPuyo = [];
+
+        this.puyoChain++;
     }
 
     dropAllPuyo() {
@@ -597,26 +631,36 @@ class PuyoController
             this.gravityCnt -= this.gravity;
         }
 
-        if(this.bfsDelayCnt <= 0) {
-            if(this.bfsAllPuyo()) {
-                this.bfsDelayCnt = this.bfsDelay;
-            }
+        if(this.markedPuyo.length === 0) {
+            this.bfsAllPuyo();
 
-            if(!this.dropAllPuyo() && this.puyo1.y === undefined) {
-                this.spawnPuyo();
+            if(this.markedPuyo.length > 0) {
+                this.clearDelayCnt = this.clearDelay;
+            } else {
+                if(this.puyo1.y === undefined) {
+                    this.puyoChain = 0;
+                    this.spawnPuyo();
+                }
             }
-
         } else {
-            this.bfsDelayCnt -= elapsed;
+            if(this.clearDelayCnt <= 0) {
+                this.clearMarkedPuyo();
+                this.dropAllPuyo();
+
+                this.bfsAllPuyo();
+                if(this.markedPuyo.length > 0) {
+                    this.clearDelayCnt = this.clearDelay;
+                }
+            } else {
+                this.clearDelayCnt -= elapsed;
+            }
         }
     }
 
-    process(elapsed, store, callback) {
+    process(elapsed, store) {
         if(this.isPlayer) {
             this.playerProcess(elapsed, store);
         }
-
-        callback(this);
     }
 }
 
