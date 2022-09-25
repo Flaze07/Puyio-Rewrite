@@ -212,6 +212,14 @@ const store = createStore({
 				//Soft drop delay
 				"SDD": 100
 			},
+			keybind: {
+				"move-left": "ArrowLeft",
+				"move-right": "ArrowRight",
+				"rotate-ccw": "KeyZ",
+				"rotate-cw": "ArrowUp",
+				"harddrop": "Space",
+				"softdrop": "ArrowDown"
+			},
 			control: {
 				"ArrowLeft": "move-left",
 				"ArrowRight": "move-right",

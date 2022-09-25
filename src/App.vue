@@ -18,7 +18,7 @@ html, body {
     margin: 0px;
 }
 
-div {
+.full-height {
     height: 100vh;
 }
 </style>
