@@ -362,14 +362,19 @@ class PuyoController
     *generateNextPuyo() {
         yield 1;
         yield 2;
+
         yield 1;
         yield 2;
+
         yield 1;
         yield 2;
+
         yield 3;
         yield 4;
+
         yield 1;
         yield 2;
+        
         while(true) {
             yield Math.floor(Math.random() * 4) + 1;
         }
